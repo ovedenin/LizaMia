@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лиза и Мия: догонялки</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Применяем шрифт Inter */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Светлый фон */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            color: #334155; /* Темный текст */
+        }
+
+        /* Стили для игрового контейнера */
+        .game-container {
+            background-color: #ffffff; /* Белый фон для контейнера */
+            border-radius: 1.5rem; /* Закругленные углы */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* Легкая тень */
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 90%; /* Максимальная ширина для адаптивности */
+            width: 800px; /* Фиксированная ширина для десктопа */
+        }
+
+        /* Стили для заголовка */
+        h1 {
+            color: #1e293b; /* Темно-синий заголовок */
+            margin-bottom: 1rem;
+            font-size: 2.25rem; /* Большой размер шрифта */
+            font-weight: 700; /* Жирный шрифт */
+            text-align: center;
+        }
+
+        /* Стили для холста */
+        canvas {
+            background-color: #e2e8f0; /* Светло-серый фон для игрового поля */
+            border-radius: 0.75rem; /* Закругленные углы */
+            border: 2px solid #94a3b8; /* Серая рамка */
+            display: block;
+            touch-action: none; /* Отключаем стандартные действия касания */
+        }
+
+        /* Стили для кнопок */
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap; /* Перенос кнопок на новую строку */
+            justify-content: center;
+        }
+
+        button {
+            background-color: #4f46e5; /* Фиолетовый фон */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem; /* Закругленные углы */
+            font-weight: 600; /* Полужирный шрифт */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Плавный переход */
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Тень для кнопки */
+        }
+
+        button:hover {
+            background-color: #4338ca; /* Более темный фиолетовый при наведении */
+            transform: translateY(-2px); /* Небольшой подъем при наведении */
+        }
+
+        button:active {
+            background-color: #3730a3; /* Еще темнее при нажатии */
+            transform: translateY(0);
+        }
+
+        /* Стили для информационного текста */
+        .info-text {
+            margin-top: 1rem;
+            font-size: 1.125rem; /* Средний размер шрифта */
+            font-weight: 500; /* Средний шрифт */
+            text-align: center;
+        }
+
+        /* Стили для сообщения о конце игры */
+        .game-over-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            z-index: 10;
+            display: none; /* Скрыто по умолчанию */
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        .game-over-message h2 {
+            font-size: 2.5rem;
+            color: #dc2626; /* Красный цвет */
+            margin-bottom: 0.5rem;
+        }
+        .game-over-message p {
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+        .game-over-message button {
+            background-color: #ef4444; /* Красная кнопка */
+        }
+        .game-over-message button:hover {
+            background-color: #dc2626;
+        }
+
+        /* Стили для сообщения о смене роли */
+        .role-message {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(79, 70, 229, 0.8); /* Фиолетовый фон */
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            z-index: 10;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        .role-message.show {
+            opacity: 1;
+        }
+
+
+        /* Адаптивные стили */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            .game-container {
+                padding: 1rem;
+            }
+            .control-buttons {
+                flex-direction: column; /* Кнопки в столбец на мобильных */
+                gap: 0.75rem;
+            }
+            button {
+                width: 100%; /* Кнопки на всю ширину */
+            }
+            .info-text {
+                font-size: 1rem;
+            }
+            .game-over-message h2 {
+                font-size: 2rem;
+            }
+            .game-over-message p {
+                font-size: 1.25rem;
+            }
+            .role-message {
+                font-size: 1.2rem;
+                padding: 0.75rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Лиза и Мия: догонялки!</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div class="info-text">
+            <p>Счет: Лиза: <span id="lizaScore">0</span> - Мия: <span id="miaScore">0</span></p>
+            <p id="chaseStatus">Мия гоняется за Лизой!</p>
+        </div>
+        <div class="control-buttons">
+            <button id="startButton">Начать игру</button>
+            <button id="restartButton" style="display: none;">Начать заново</button>
+        </div>
+    </div>
+
+    <div id="gameOverMessage" class="game-over-message">
+        <h2>Игра окончена!</h2>
+        <p id="gameOverReason"></p>
+        <p>Финальный счет: Лиза: <span id="finalLizaScore">0</span> - Мия: <span id="finalMiaScore">0</span></p>
+        <button id="playAgainButton">Играть снова</button>
+    </div>
+
+    <div id="roleMessage" class="role-message"></div>
+
+    <script type="module">
+        // Получаем холст и его контекст
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Получаем элементы интерфейса
+        const lizaScoreDisplay = document.getElementById('lizaScore');
+        const miaScoreDisplay = document.getElementById('miaScore');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const gameOverMessage = document.getElementById('gameOverMessage');
+        const gameOverReason = document.getElementById('gameOverReason');
+        const finalLizaScoreDisplay = document.getElementById('finalLizaScore');
+        const finalMiaScoreDisplay = document.getElementById('finalMiaScore'); 
+        const playAgainButton = document.getElementById('playAgainButton');
+        const chaseStatusDisplay = document.getElementById('chaseStatus');
+        const roleMessageDisplay = document.getElementById('roleMessage');
+
+        // Размеры игрового поля (будут адаптироваться)
+        let CANVAS_WIDTH;
+        let CANVAS_HEIGHT;
+
+        // Параметры Лизы
+        const LIZA_SIZE = 20; // Размер Лизы
+        let liza = {
+            x: 0, y: 0,
+            baseSpeed: 5, // Базовая скорость Лизы (когда она убегает)
+            chaseSpeed: 6, // Скорость Лизы (когда она гоняется)
+            currentSpeed: 5, // Текущая скорость Лизы
+            dx: 0, dy: 0
+        };
+
+        // Параметры Мии
+        const MIA_SIZE = 25; // Размер Мии
+        let mia = {
+            x: 0, y: 0,
+            chaseSpeed: 2.5, // Скорость Мии (когда она гоняется)
+            runSpeed: 4, // Скорость Мии (когда она убегает)
+            currentSpeed: 2.5 // Текущая скорость Мии
+        };
+
+        // Состояние игры
+        let gameRunning = false;
+        let lizaScore = 0; // Счет Лизы
+        let miaScore = 0;  // Счет Мии
+        let currentChaser = 'mia'; // Кто сейчас гоняется: 'mia' или 'liza'
+        const MAX_SCORE = 5; // Максимальное количество баллов для победы
+
+        // Переменные для сенсорного управления
+        let isTouchActive = false; // Флаг, указывающий, активно ли сенсорное управление
+        let touchTargetX = 0;      // X-координата цели касания
+        let touchTargetY = 0;      // Y-координата цели касания
+
+        // Объект для отслеживания нажатых клавиш
+        let keysPressed = {};
+
+        // Препятствия (мебель) - Начальный набор
+        const initialObstacles = [
+            { x: 100, y: 100, width: 80, height: 40, color: '#a0522d' }, // Стол
+            { x: 250, y: 50, width: 40, height: 80, color: '#8b4513' }, // Книжный шкаф
+            { x: 400, y: 200, width: 60, height: 60, color: '#696969' }, // Диван
+            { x: 150, y: 300, width: 100, height: 30, color: '#a0522d' }, // Письменный стол
+            { x: 300, y: 400, width: 50, height: 50, color: '#808080' },  // Стул
+            { x: 50, y: 200, width: 30, height: 120, color: '#556b2f' }, // Комнатное растение
+            { x: 350, y: 120, width: 120, height: 30, color: '#a0522d' }, // Журнальный столик
+            { x: 200, y: 450, width: 80, height: 80, color: '#4682b4' },  // Кресло
+        ];
+
+        // Типы препятствий, которые будут добавляться динамически
+        const potentialObstacleTypes = [
+            { width: 60, height: 30, color: '#a0522d' }, // Небольшой столик
+            { width: 30, height: 60, color: '#8b4513' }, // Узкий шкаф
+            { width: 40, height: 40, color: '#696969' }, // Небольшой стул
+            { width: 80, height: 20, color: '#556b2f' }, // Скамейка
+            { width: 25, height: 25, color: '#808080' }, // Пуфик
+            { width: 90, height: 50, color: '#4682b4' }, // Кресло
+            { width: 50, height: 50, color: '#a0522d' }, // Квадратный стол
+            { width: 30, height: 30, color: '#8b4513' }, // Маленькое растение
+            { width: 70, height: 70, color: '#696969' }, // Круглый стол
+            { width: 15, height: 15, color: '#556b2f' } // Крошечное растение
+        ];
+
+        let obstacles = []; // Этот массив будет заполняться в startGame и обновляться в процессе игры
+
+        /**
+         * Инициализирует размеры холста в зависимости от размера окна.
+         * Это делает игру адаптивной.
+         */
+        function initializeCanvasSize() {
+            // Устанавливаем размеры холста в зависимости от ширины окна
+            if (window.innerWidth < 768) {
+                CANVAS_WIDTH = window.innerWidth * 0.8;
+                CANVAS_HEIGHT = window.innerWidth * 0.8;
+            } else {
+                CANVAS_WIDTH = 600;
+                CANVAS_HEIGHT = 600;
+            }
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+        }
+
+        /**
+         * Проверяет, сталкивается ли заданный прямоугольник с каким-либо препятствием.
+         * @param {number} x - X-координата прямоугольника.
+         * @param {number} y - Y-координата прямоугольника.
+         * @param {number} width - Ширина прямоугольника.
+         * @param {number} height - Высота прямоугольника.
+         * @returns {boolean} - True, если есть столкновение, иначе false.
+         */
+        function isCollidingWithObstacle(x, y, width, height) {
+            for (const obstacle of obstacles) {
+                if (x < obstacle.x + obstacle.width &&
+                    x + width > obstacle.x &&
+                    y < obstacle.y + obstacle.height &&
+                    y + height > obstacle.y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Рисует Лизу на холсте.
+         */
+        function drawLiza() {
+            ctx.fillStyle = '#f87171'; // Розовый цвет для Лизы
+            ctx.beginPath();
+            ctx.arc(liza.x + LIZA_SIZE / 2, liza.y + LIZA_SIZE / 2, LIZA_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ef4444'; // Красная обводка
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        /**
+         * Рисует Мию на холсте.
+         */
+        function drawMia() {
+            ctx.fillStyle = '#cbd5e1'; // Светло-серый/белый для Мии (шпиц)
+            ctx.beginPath();
+            ctx.arc(mia.x + MIA_SIZE / 2, mia.y + MIA_SIZE / 2, MIA_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#94a3b8'; // Серая обводка
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Добавляем маленькие ушки для шпица
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.moveTo(mia.x + MIA_SIZE / 2 - MIA_SIZE / 4, mia.y + MIA_SIZE / 2 - MIA_SIZE / 2);
+            ctx.lineTo(mia.x + MIA_SIZE / 2 - MIA_SIZE / 8, mia.y + MIA_SIZE / 2 - MIA_SIZE);
+            ctx.lineTo(mia.x + MIA_SIZE / 2, mia.y + MIA_SIZE / 2 - MIA_SIZE / 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(mia.x + MIA_SIZE / 2 + MIA_SIZE / 4, mia.y + MIA_SIZE / 2 - MIA_SIZE / 2);
+            ctx.lineTo(mia.x + MIA_SIZE / 2 + MIA_SIZE / 8, mia.y + MIA_SIZE / 2 - MIA_SIZE);
+            ctx.lineTo(mia.x + MIA_SIZE / 2, mia.y + MIA_SIZE / 2 - MIA_SIZE / 2);
+            ctx.fill();
+        }
+
+        /**
+         * Рисует препятствия на холсте.
+         */
+        function drawObstacles() {
+            for (const obstacle of obstacles) {
+                ctx.fillStyle = obstacle.color;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                ctx.strokeStyle = '#334155'; // Темная обводка для мебели
+                ctx.lineWidth = 1;
+                ctx.strokeRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        /**
+         * Обновляет позицию Лизы на основе ее скорости.
+         * Также проверяет границы холста и столкновения с препятствиями.
+         */
+        function updateLizaPosition() {
+            const newLizaX = liza.x + liza.dx;
+            const newLizaY = liza.y + liza.dy;
+
+            let canMoveX = true;
+            let canMoveY = true;
+
+            // Проверка столкновений с препятствиями по оси X
+            if (isCollidingWithObstacle(newLizaX, liza.y, LIZA_SIZE, LIZA_SIZE)) {
+                canMoveX = false;
+            }
+
+            // Проверка столкновений с препятствиями по оси Y
+            if (isCollidingWithObstacle(liza.x, newLizaY, LIZA_SIZE, LIZA_SIZE)) {
+                canMoveY = false;
+            }
+
+            if (canMoveX) {
+                liza.x = newLizaX;
+            }
+            if (canMoveY) {
+                liza.y = newLizaY;
+            }
+
+            // Проверка границ холста для Лизы
+            if (liza.x < 0) liza.x = 0;
+            if (liza.x + LIZA_SIZE > CANVAS_WIDTH) liza.x = CANVAS_WIDTH - LIZA_SIZE;
+            if (liza.y < 0) liza.y = 0;
+            if (liza.y + LIZA_SIZE > CANVAS_HEIGHT) liza.y = CANVAS_HEIGHT - LIZA_SIZE;
+        }
+
+        /**
+         * Обновляет позицию Мии.
+         * Если Мия гоняется за Лизой, она движется к Лизе.
+         * Если Лиза гоняется за Мией, Мия пытается убежать.
+         */
+        function updateMiaPosition() {
+            let targetX, targetY;
+            let currentMiaSpeed;
+
+            if (currentChaser === 'mia') {
+                // Мия гоняется за Лизой
+                // Добавляем небольшое случайное отклонение для непредсказуемой погони
+                targetX = liza.x + (Math.random() - 0.5) * 30; 
+                targetY = liza.y + (Math.random() - 0.5) * 30;
+                currentMiaSpeed = mia.currentSpeed;
+            } else { // currentChaser === 'liza'
+                // Мия убегает от Лизы
+                targetX = mia.x + (mia.x - liza.x); // Двигаться в противоположном от Лизы направлении
+                targetY = mia.y + (mia.y - liza.y);
+                currentMiaSpeed = mia.currentSpeed;
+
+                // Увеличиваем случайное движение для более активного и непредсказуемого убегания
+                targetX += (Math.random() - 0.5) * 70; 
+                targetY += (Math.random() - 0.5) * 70;
+            }
+
+            // Рассчитываем предполагаемые новые координаты Мии
+            const angle = Math.atan2(targetY - mia.y, targetX - mia.x);
+            const moveX = Math.cos(angle) * currentMiaSpeed;
+            const moveY = Math.sin(angle) * currentMiaSpeed;
+
+            const newMiaX = mia.x + moveX;
+            const newMiaY = mia.y + moveY;
+
+            let canMoveX = true;
+            let canMoveY = true;
+
+            // Проверка столкновений с препятствиями по оси X для Мии
+            if (isCollidingWithObstacle(newMiaX, mia.y, MIA_SIZE, MIA_SIZE)) {
+                canMoveX = false;
+            }
+
+            // Проверка столкновений с препятствиями по оси Y для Мии
+            if (isCollidingWithObstacle(mia.x, newMiaY, MIA_SIZE, MIA_SIZE)) {
+                canMoveY = false;
+            }
+
+            if (canMoveX) {
+                mia.x = newMiaX;
+            }
+            if (canMoveY) {
+                mia.y = newMiaY;
+            }
+
+            // Проверка границ холста для Мии
+            if (mia.x < 0) mia.x = 0;
+            if (mia.x + MIA_SIZE > CANVAS_WIDTH) mia.x = CANVAS_WIDTH - MIA_SIZE;
+            if (mia.y < 0) mia.y = 0;
+            if (mia.y + MIA_SIZE > CANVAS_HEIGHT) mia.y = CANVAS_HEIGHT - MIA_SIZE;
+        }
+
+        /**
+         * Добавляет указанное количество новых препятствий на игровое поле.
+         * Препятствия размещаются в случайных безопасных местах.
+         * @param {number} count - Количество препятствий для добавления.
+         */
+        function addNewObstacles(count) {
+            for (let i = 0; i < count; i++) {
+                const randomTypeIndex = Math.floor(Math.random() * potentialObstacleTypes.length);
+                const obstacleType = potentialObstacleTypes[randomTypeIndex];
+
+                // Находим безопасную позицию для нового препятствия
+                let newObstacleX, newObstacleY;
+                let attempts = 0;
+                const MAX_PLACEMENT_ATTEMPTS = 200; // Ограничение попыток размещения препятствия
+                do {
+                    newObstacleX = Math.random() * (CANVAS_WIDTH - obstacleType.width);
+                    newObstacleY = Math.random() * (CANVAS_HEIGHT - obstacleType.height);
+                    attempts++;
+                    if (attempts > MAX_PLACEMENT_ATTEMPTS) {
+                        console.warn("Не удалось найти безопасную позицию для нового препятствия.");
+                        break; // Выходим, если не можем найти место
+                    }
+                } while (isCollidingWithObstacle(newObstacleX, newObstacleY, obstacleType.width, obstacleType.height) ||
+                         // Также убеждаемся, что новое препятствие не перекрывает Лизу или Мию
+                         (newObstacleX < liza.x + LIZA_SIZE && newObstacleX + obstacleType.width > liza.x &&
+                          newObstacleY < liza.y + LIZA_SIZE && newObstacleY + obstacleType.height > liza.y) ||
+                         (newObstacleX < mia.x + MIA_SIZE && newObstacleX + obstacleType.width > mia.x &&
+                          newObstacleY < mia.y + MIA_SIZE && newObstacleY + obstacleType.height > mia.y));
+
+                if (attempts <= MAX_PLACEMENT_ATTEMPTS) { // Добавляем, только если нашли место
+                    obstacles.push({
+                        x: newObstacleX,
+                        y: newObstacleY,
+                        width: obstacleType.width,
+                        height: obstacleType.height,
+                        color: obstacleType.color
+                    });
+                }
+            }
+        }
+
+        /**
+         * Проверяет столкновение между Лизой и Мией.
+         * Начисляет очки и меняет роли или заканчивает игру.
+         */
+        function checkCollision() {
+            const distanceX = (liza.x + LIZA_SIZE / 2) - (mia.x + MIA_SIZE / 2);
+            const distanceY = (liza.y + LIZA_SIZE / 2) - (mia.y + MIA_SIZE / 2);
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+            if (distance < (LIZA_SIZE / 2 + MIA_SIZE / 2)) {
+                if (currentChaser === 'mia') {
+                    miaScore++; // Мия поймала Лизу, Мия получает очко
+                    // Перемещаем Лизу в случайное безопасное место
+                    const lizaNewPos = getRandomSafePosition(LIZA_SIZE, LIZA_SIZE);
+                    liza.x = lizaNewPos.x;
+                    liza.y = lizaNewPos.y;
+
+                } else { // currentChaser === 'liza'
+                    lizaScore++; // Лиза поймала Мию, Лиза получает очко
+                    // Перемещаем Мию в случайное безопасное место
+                    const miaNewPos = getRandomSafePosition(MIA_SIZE, MIA_SIZE);
+                    mia.x = miaNewPos.x;
+                    mia.y = miaNewPos.y;
+                }
+                updateScoreDisplay(); // Обновляем отображение счета
+
+                // Увеличиваем скорость Мии после каждой поимки
+                mia.chaseSpeed += 0.2;
+                mia.runSpeed += 0.2;
+                // Ограничиваем максимальную скорость, чтобы игра не стала невозможной
+                mia.chaseSpeed = Math.min(mia.chaseSpeed, 10);
+                mia.runSpeed = Math.min(mia.runSpeed, 8);
+
+                // Добавляем 2 новых предмета мебели с каждым очком
+                addNewObstacles(2);
+
+                // Проверяем условие победы после каждой поимки
+                if (miaScore >= MAX_SCORE || lizaScore >= MAX_SCORE) {
+                    if (miaScore >= MAX_SCORE) {
+                        gameOverReason.textContent = `Мия набрала ${MAX_SCORE} очков! Мия победила!`;
+                    } else { // lizaScore >= MAX_SCORE
+                        gameOverReason.textContent = `Лиза набрала ${MAX_SCORE} очков! Лиза победила!`;
+                    }
+                    endGame(); // Заканчиваем игру
+                    return; // Выходим из функции, чтобы не менять роли после победы
+                }
+
+                // Если никто не выиграл, меняем роли
+                switchChaser();
+            }
+        }
+
+        /**
+         * Обновляет отображение счета на экране.
+         */
+        function updateScoreDisplay() {
+            lizaScoreDisplay.textContent = lizaScore;
+            miaScoreDisplay.textContent = miaScore;
+        }
+
+        /**
+         * Переключает, кто гоняется за кем.
+         */
+        function switchChaser() {
+            if (currentChaser === 'mia') {
+                currentChaser = 'liza';
+                liza.currentSpeed = liza.chaseSpeed; // Лиза становится быстрее (преследует)
+                mia.currentSpeed = mia.runSpeed; // Мия становится быстрее (убегает)
+                chaseStatusDisplay.textContent = "Лиза гоняется за Мией!";
+                displayRoleMessage("Теперь Лиза гоняется за Мией!");
+            } else {
+                currentChaser = 'mia';
+                liza.currentSpeed = liza.baseSpeed; // Лиза возвращается к базовой скорости (убегает)
+                mia.currentSpeed = mia.chaseSpeed; // Мия гоняется с обычной скоростью (преследует)
+                chaseStatusDisplay.textContent = "Мия гоняется за Лизой!";
+                displayRoleMessage("Теперь Мия гоняется за Лизой!");
+            }
+            // Сбрасываем движение Лизы, чтобы избежать инерции после смены роли
+            liza.dx = 0;
+            liza.dy = 0;
+        }
+
+        /**
+         * Отображает временное сообщение о смене роли.
+         * @param {string} message - Сообщение для отображения.
+         */
+        function displayRoleMessage(message) {
+            roleMessageDisplay.textContent = message;
+            roleMessageDisplay.classList.add('show');
+            setTimeout(() => {
+                roleMessageDisplay.classList.remove('show');
+            }, 2000); // Сообщение исчезнет через 2 секунды
+        }
+
+        /**
+         * Игровой цикл: обновляет состояние игры и перерисовывает холст.
+         * @param {DOMHighResTimeStamp} currentTime - Текущее время, переданное requestAnimationFrame.
+         */
+        function gameLoop(currentTime) {
+            if (!gameRunning) return;
+
+            // Определяем движение Лизы
+            let targetDx = 0;
+            let targetDy = 0;
+
+            // Клавиатурный ввод имеет приоритет
+            if (keysPressed['ArrowUp']) targetDy = -liza.currentSpeed;
+            if (keysPressed['ArrowDown']) targetDy = liza.currentSpeed;
+            if (keysPressed['ArrowLeft']) targetDx = -liza.currentSpeed;
+            if (keysPressed['ArrowRight']) targetDx = liza.currentSpeed;
+
+            // Если клавиатурный ввод не активен, используем сенсорный ввод
+            if (targetDx === 0 && targetDy === 0 && isTouchActive) {
+                const lizaCenterX = liza.x + LIZA_SIZE / 2;
+                const lizaCenterY = liza.y + LIZA_SIZE / 2;
+
+                const dx = touchTargetX - lizaCenterX;
+                const dy = touchTargetY - lizaCenterY;
+                const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+                // Двигаем Лизу к пальцу, только если палец достаточно далеко от Лизы
+                const FOLLOW_THRESHOLD = 5; // Порог, чтобы избежать дрожания
+                if (magnitude > FOLLOW_THRESHOLD) {
+                    targetDx = (dx / magnitude) * liza.currentSpeed;
+                    targetDy = (dy / magnitude) * liza.currentSpeed;
+                } else {
+                    // Если палец очень близко, останавливаем Лизу
+                    targetDx = 0;
+                    targetDy = 0;
+                }
+            }
+
+            liza.dx = targetDx;
+            liza.dy = targetDy;
+
+            // Очистка холста
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Рисование препятствий
+            drawObstacles();
+
+            // Обновление позиций
+            updateLizaPosition();
+            updateMiaPosition();
+
+            // Рисование персонажей
+            drawLiza();
+            drawMia();
+
+            // Проверка столкновений
+            checkCollision();
+
+            // Запрос следующего кадра анимации
+            requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Находит случайную безопасную позицию на холсте, не пересекающую препятствия.
+         * @param {number} itemWidth - Ширина элемента.
+         * @param {number} itemHeight - Высота элемента.
+         * @returns {{x: number, y: number}} - Объект с координатами x и y.
+         */
+        function getRandomSafePosition(itemWidth, itemHeight) {
+            let newX, newY;
+            let attempts = 0;
+            const MAX_ATTEMPTS = 500; 
+            do {
+                newX = Math.random() * (CANVAS_WIDTH - itemWidth);
+                newY = Math.random() * (CANVAS_HEIGHT - itemHeight);
+                attempts++;
+                if (attempts > MAX_ATTEMPTS) {
+                    console.warn("Не удалось найти безопасную позицию после многих попыток.");
+                    return { x: CANVAS_WIDTH / 2 - itemWidth / 2, y: CANVAS_HEIGHT / 2 - itemHeight / 2 };
+                }
+            } while (isCollidingWithObstacle(newX, newY, itemWidth, itemHeight));
+            return { x: newX, y: newY };
+        }
+
+        /**
+         * Начинает игру.
+         * Сбрасывает счет, позиционирует персонажей и запускает игровой цикл.
+         */
+        function startGame() {
+            gameRunning = true;
+            lizaScore = 0; // Сбрасываем счет Лизы
+            miaScore = 0;  // Сбрасываем счет Мии
+            updateScoreDisplay(); // Обновляем отображение счета
+
+            // Скрываем кнопку "Начать игру", показываем "Начать заново"
+            startButton.style.display = 'none';
+            restartButton.style.display = 'inline-block';
+            gameOverMessage.style.display = 'none'; // Скрываем сообщение о конце игры
+
+            // Устанавливаем начального преследователя и скорости
+            currentChaser = 'mia';
+            liza.currentSpeed = liza.baseSpeed; // Лиза убегает
+            mia.chaseSpeed = 2.5; // Сбрасываем скорость Мии до начальной
+            mia.runSpeed = 4;     // Сбрасываем скорость Мии до начальной
+            mia.currentSpeed = mia.chaseSpeed; // Мия преследует
+            chaseStatusDisplay.textContent = "Мия гоняется за Лизой!";
+
+            // Инициализируем препятствия только начальным набором
+            obstacles = [...initialObstacles];
+
+            // Размещаем Лизу в безопасном случайном месте
+            const lizaPos = getRandomSafePosition(LIZA_SIZE, LIZA_SIZE);
+            liza.x = lizaPos.x;
+            liza.y = lizaPos.y;
+            liza.dx = 0;
+            liza.dy = 0;
+
+            let miaPos;
+            let attempts = 0;
+            const MIN_DISTANCE = 200; // Минимальное расстояние между Лизой и Мией при старте
+            do {
+                miaPos = getRandomSafePosition(MIA_SIZE, MIA_SIZE);
+                mia.x = miaPos.x;
+                mia.y = miaPos.y;
+                const distance = Math.sqrt(Math.pow(liza.x - mia.x, 2) + Math.pow(liza.y - mia.y, 2));
+                attempts++;
+                if (attempts > 500) { // Ограничение попыток, чтобы не зависнуть
+                    console.warn("Не удалось найти достаточно удаленную и безопасную позицию для Мии.");
+                    // Если не нашли, ставим Мию просто в центр, это лучше, чем зависнуть
+                    mia.x = CANVAS_WIDTH / 2 - MIA_SIZE / 2;
+                    mia.y = CANVAS_HEIGHT / 2 - MIA_SIZE / 2;
+                    break;
+                }
+            } while (Math.sqrt(Math.pow(liza.x - mia.x, 2) + Math.pow(liza.y - mia.y, 2)) < MIN_DISTANCE ||
+                     isCollidingWithObstacle(mia.x, mia.y, MIA_SIZE, MIA_SIZE)); // Убеждаемся, что Мия не на препятствии
+
+            // Сброс состояния нажатых клавиш и сенсорного направления
+            keysPressed = {};
+            isTouchActive = false; // Сброс флага сенсорного управления
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Завершает игру.
+         * Останавливает игровой цикл и показывает сообщение о конце игры.
+         */
+        function endGame() {
+            gameRunning = false;
+            finalLizaScoreDisplay.textContent = lizaScore; // Показываем финальный счет Лизы
+            finalMiaScoreDisplay.textContent = miaScore;   // Показываем финальный счет Мии
+            gameOverMessage.style.display = 'flex'; // Показываем сообщение
+        }
+
+        /**
+         * Обработчик нажатия клавиши.
+         * @param {KeyboardEvent} e - Событие нажатия клавиши.
+         */
+        function handleKeyDown(e) {
+            if (!gameRunning) return;
+            keysPressed[e.key] = true;
+        }
+
+        /**
+         * Обработчик отпускания клавиши.
+         * @param {KeyboardEvent} e - Событие отпускания клавиши.
+         */
+        function handleKeyUp(e) {
+            if (!gameRunning) return;
+            keysPressed[e.key] = false;
+        }
+
+        /**
+         * Обработчик начала касания для сенсорного управления.
+         * @param {TouchEvent} e - Событие касания.
+         */
+        function handleTouchStart(e) {
+            if (!gameRunning) return;
+            e.preventDefault(); // Предотвращаем прокрутку страницы
+            isTouchActive = true;
+            const rect = canvas.getBoundingClientRect();
+            touchTargetX = e.touches[0].clientX - rect.left;
+            touchTargetY = e.touches[0].clientY - rect.top;
+        }
+
+        /**
+         * Обработчик перемещения касания для сенсорного управления.
+         * @param {TouchEvent} e - Событие касания.
+         */
+        function handleTouchMove(e) {
+            if (!gameRunning || !isTouchActive) return;
+            e.preventDefault(); // Предотвращаем прокрутку страницы
+            const rect = canvas.getBoundingClientRect();
+            touchTargetX = e.touches[0].clientX - rect.left;
+            touchTargetY = e.touches[0].clientY - rect.top;
+        }
+
+        /**
+         * Обработчик окончания касания для сенсорного управления.
+         * @param {TouchEvent} e - Событие касания.
+         */
+        function handleTouchEnd(e) {
+            if (!gameRunning) return;
+            isTouchActive = false; // Отключаем сенсорное управление
+            // Лиза остановится, так как isTouchActive станет false, и в gameLoop не будет применяться движение от касания
+        }
+
+        // Инициализация размеров при загрузке и изменении размера окна
+        window.addEventListener('load', () => {
+            initializeCanvasSize();
+            startGame(); // Автоматически запускаем игру при загрузке
+        });
+        window.addEventListener('resize', initializeCanvasSize);
+
+        // Добавляем слушатели событий
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+        playAgainButton.addEventListener('click', startGame);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp); // Добавили слушатель отпускания клавиши
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false }); // Добавлен обработчик touchmove
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    </script>
+</body>
+</html>
